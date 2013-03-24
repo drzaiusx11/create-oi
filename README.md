@@ -5,7 +5,7 @@ An API for interacting with an iRobot Create. Because robots are fun.
 
 ---
 The iRobot Create natively provides a low-level serial protocol called the "Open Interface" (OI) documented [here](http://www.irobot.com/filelibrary/pdfs/hrd/create/Create%20Open%20Interface_v2.pdf).
-What this library attempts to do is implement an simple and intuitive API on top of OI in [node.js](http://nodejs.org/) using the great [serialport](https://github.com/voodootikigod/node-serialport) library.
+What this library attempts to do is implement a simple and intuitive API on top of OI in [node.js](http://nodejs.org/) using the great [serialport](https://github.com/voodootikigod/node-serialport) library.
 
 Prerequisites
 -------------
