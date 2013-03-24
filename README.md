@@ -8,7 +8,7 @@ Prerequisites
  * Have an iRobot Create 
  * Installed usb-serial drivers and connected laptop, Raspberry Pi, Gumstix or similarly capable machine to your Create
    * see: [Windows installation instructions](http://homesupport.irobot.com/app/answers/detail/a_id/362/~/installing-the-usb-serial-port) if necessary (if using Create USB cable)
- * node and npm installed
+ * node and npm are installed
 
 Installation
 ------------
