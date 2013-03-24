@@ -6,7 +6,7 @@ An API for interacting with an iRobot Create. Because robots are fun.
 Description
 -----------
 The iRobot Create provides a serial API called the "Open Interface" documented [here](http://www.irobot.com/filelibrary/pdfs/hrd/create/Create%20Open%20Interface_v2.pdf).
-This library implements that serial protocol in node using the great [serialport](https://github.com/voodootikigod/node-serialport) library.
+This library implements that serial protocol in [node.js](http://nodejs.org/) using the great [serialport](https://github.com/voodootikigod/node-serialport) library.
 
 Prerequisites
 -------------
