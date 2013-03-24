@@ -203,6 +203,10 @@ var create = (function() {
         return prior;
     };
 
+    module.rotate = function(vel) {
+        return module.drive(vel, 1);
+    };
+
     module.wait = function(ms) {
         prior = prior.then(function() {
             var deferred = Q.defer();
@@ -245,6 +249,7 @@ var create = (function() {
     local.context.getAngle = module.getAngle;
     local.context.on = module.on;
     local.context.init = module.init;
+    local.context.rotate = module.rotate;
     */
 
     return module;

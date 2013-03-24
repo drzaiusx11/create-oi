@@ -1,4 +1,3 @@
-
 var robot = require("create-oi");
 
 robot.init({ serialport: "/dev/tty.usbserial-A2001nf6" });
@@ -17,11 +16,11 @@ robot.on('bump', function(e) {
     switch(e.direction) {
         case 'forward': // fall through as 'left'
         case 'left':
-            this.drive(-100, 1); // turn right for a bit
+            this.rotate(-100); // turn right for a bit
             this.wait(1000);
             break;
         case 'right':
-            this.drive(100, 1); // turn left for a bit
+            this.rotate(100); // turn left for a bit
             this.wait(1000);
             break;
     }
