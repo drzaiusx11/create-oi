@@ -45,24 +45,25 @@ var robot = require("create-oi");
 robot.init({ serialport: "/dev/tty.usbserial-A2001nf6" });
 ```
 Make sure to set your `serialport` to the device name you found earlier. 
-On my mac for me this is `"/dev/tty.usbserial-A2001nf6"`, yours will be different.
+On my mac for me this is `"/dev/tty.usbserial-A2001nf6"`. Yours _will_ be different.
 
 The API is event-based, meaning all the important stuff happens in event callbacks.
 The first event you'll need to deal with is the `ready` event which gets fired when
 the module sucessfully connects to the Create over the serial port. Note that the 
 `this` context for all your callback handlers will be set to the `create-oi` module 
 itself, so you can easily call `drive`, `rotate` or any other module method within a 
-callback. Several events such as `bump` or `wheeldrop` make contain information about 
-which specific sensor was triggered since there are multiple on the Create.
+callback. Several events such as `bump` or `wheeldrop` will contain information about 
+which specific sensor was triggered inside the event parameter passed into your 
+callback function.
 
 ```javascript
 robot.on('ready', function() {
-    // start by going forward
-    this.drive(100, 0);
+    // twirl towards freedom
+    this.rotate(100);
 });
 
-robot.on('bump', function(e) {
-    console.log(e.direction);
+robot.on('bump', function(bumpEvent) {
+    console.log(bumpEvent.direction);
     ...
 });
 
