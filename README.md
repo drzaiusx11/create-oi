@@ -68,6 +68,10 @@ robot.on('bump', function(bumpEvent) {
 });
 
 ```
+Examples
+--------
+Working examples (provided you change the serial port) can be found in the examples directory.
+
 API Docs
 --------
 See the wiki.
