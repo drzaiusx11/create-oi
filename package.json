@@ -1,6 +1,6 @@
 {
   "name": "create-oi",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "iRobot Create Open Interface (OI) library",
   "main": "bin/main.js",
   "directories": {
