@@ -49,11 +49,11 @@ On my mac for me this is `"/dev/tty.usbserial-A2001nf6"`, yours will be differen
 
 The API is event-based, meaning all the important stuff happens in event callbacks.
 The first event you'll need to deal with is the `ready` event which gets fired when
-the module sucessfully connects to the Create over the serial port. All the `on`
-handlers, the `this` context is set to the `create-oi` module itself, so you can
-easily call `drive`, `rotate` or any other module method within a callback. Several
-events such as `bump` or `wheeldrop` make contain information about which specific
-sensor was triggered since there are multiple on the Create.
+the module sucessfully connects to the Create over the serial port. Note that the 
+`this` context for all your callback handlers will be set to the `create-oi` module 
+itself, so you can easily call `drive`, `rotate` or any other module method within a 
+callback. Several events such as `bump` or `wheeldrop` make contain information about 
+which specific sensor was triggered since there are multiple on the Create.
 
 ```
 robot.on('ready', function() {
