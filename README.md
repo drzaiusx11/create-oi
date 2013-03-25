@@ -20,13 +20,42 @@ Installation
 npm install create-oi
 ```
 
-Usage
+Getting Started
 -----
+After plugging in your Create USB cable you'll need to find 
+out what serial port your operating system has assigned your Create.
+
+On linux:
+```sh
+$ dmesg | grep tty
+```
+On a mac:
+```sh
+$ ls /dev/tty.*
+```
+On a windows box, open device manager and look under "Ports":
+```bat
+C:\> mmc devmgmt.msc
+```
+
+In your code you'll probably want to start with these two lines:
 ```javascript
 var robot = require("create-oi");
 
 robot.init({ serialport: "/dev/tty.usbserial-A2001nf6" });
+```
+Make sure to set your `serialport` to the device name you found earlier. 
+On my mac for me this is `"/dev/tty.usbserial-A2001nf6"`, yours will be different.
 
+The API is event-based, meaning all the important stuff happens in event callbacks.
+The first event you'll need to deal with is the `ready` event which gets fired when
+the module sucessfully connects to the Create over the serial port. All the `on`
+handlers, the `this` context is set to the `create-oi` module itself, so you can
+easily call `drive`, `rotate` or any other module method within a callback. Several
+events such as `bump` or `wheeldrop` make contain information about which specific
+sensor was triggered since there are multiple on the Create.
+
+```
 robot.on('ready', function() {
     // start by going forward
     this.drive(100, 0);
