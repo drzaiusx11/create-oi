@@ -68,3 +68,6 @@ robot.on('bump', function(bumpEvent) {
 });
 
 ```
+API Docs
+--------
+See the wiki.
