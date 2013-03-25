@@ -44,7 +44,7 @@ var create = (function() {
 
     function getHeader(buffer) {
         for (var i = 0; i < buffer.length; i++) {
-            if (buffer[i] === 19 && buffer.length > i+1) {
+            if (buffer[i] === 19 && buffer.length > i+1 && buffer[i+1] > 0) {
                 return {start: i, length: buffer[i+1]};
             }
         }
@@ -52,40 +52,37 @@ var create = (function() {
     }
 
     function parse(buffer) {
-        console.log(buffer.length);
         var hdr = -1; 
-        if (pkt.length === 0) {
+        if (pkt.length === 0) 
             hdr = getHeader(buffer);
-        } else {
+        else 
             hdr = { start: 0, length: pkt[1] };
-        }
         if (hdr === -1)
             return; // haven't found start of pkt yet
 
-        var chksum = 0;
-
-        for (var i = hdr.start; i < buffer.length; i++) {
+        for (var i = hdr.start; i < buffer.length; i++) 
             pkt.push(buffer[i]);
-        }
 
-        if (pkt.length < (hdr.length + 1))
+        // +3 due to START byte, COUNT byte, CHKSUM byte
+        if (pkt.length < (hdr.length + 3))
             return;
         
-        for (var i = 0; i < hdr.length + 1 /* +1 for chksum itself */; i++) {
+        var chksum = 0;
+        for (var i = 0; i < hdr.length + 3; i++) 
             chksum += pkt[i];
-        }
 
-        pkt.splice(0,hdr.length+1);
+        var currPkt = pkt.splice(0,hdr.length+3);
+        //console.log(currPkt);
 
         chksum = chksum & 0xff;
 
         if (chksum == 0) {
             var idx = 2;
             var sensorMsgsParsed = 0;
-            while (idx < buffer.length - 2) {
-                switch (buffer[idx]) {
+            while (idx < currPkt.length - 1) {
+                switch (currPkt[idx]) {
                     case sensors.BUMP_WDROP:
-                        var mask = buffer[idx+1];
+                        var mask = currPkt[idx+1];
                         // bumper hit!
                         if (mask > 0 && mask < 4) {
                             var e = {};
@@ -105,7 +102,7 @@ var create = (function() {
                         sensorMsgsParsed++;
                     break;
                     case sensors.DISTANCE:
-                        var val = (buffer[idx+1] << 8) | buffer[idx+2];
+                        var val = (currPkt[idx+1] << 8) | currPkt[idx+2];
                         if (val > 32767) {
                             val -= 65536;
                         }
@@ -114,7 +111,7 @@ var create = (function() {
                         sensorMsgsParsed++;
                     break;
                     case sensors.ANGLE:
-                        var val = (buffer[idx+1] << 8) | buffer[idx+2];
+                        var val = (currPkt[idx+1] << 8) | currPkt[idx+2];
                         if (val > 32767) {
                             val -= 65536;
                         }
@@ -127,7 +124,9 @@ var create = (function() {
                         idx++;
                 }
             }
-            //console.log(sensorMsgsParsed);
+        } else {
+            //console.log("warn: incomming packet failed checksum");
+            pkt = [];
         }
     }
 

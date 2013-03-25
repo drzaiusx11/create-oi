@@ -1,6 +1,6 @@
 var robot = require("create-oi");
 
-robot.init({ serialport: "/dev/tty.usbserial-A2001nf6" });
+robot.init({ serialport: "/dev/ttyUSB0" });
 
 robot.on('ready', function() {
     // start by going forward
