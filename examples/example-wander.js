@@ -14,16 +14,18 @@ robot.on('bump', function(e) {
 
     // turn based on which bumper sensor got hit
     switch(e.direction) {
-        case 'forward': // fall through as 'left'
+        case 'forward': // randomly choose a direction
+            var dir = [-1,1][Math.round(Math.random())];
+            this.rotate(dir*100);
+            break;
         case 'left':
-            this.rotate(-100); // turn right for a bit
-            this.wait(1000);
+            this.rotate(-100); // turn right
             break;
         case 'right':
-            this.rotate(100); // turn left for a bit
-            this.wait(1000);
+            this.rotate(100); // turn left 
             break;
     }
+    this.wait(1000);
 
     // onward!
     this.drive(100, 0);
