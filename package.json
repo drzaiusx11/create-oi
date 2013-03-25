@@ -16,7 +16,7 @@
     "irobot"
   ],
   "dependencies": {
-    "serialport": ">= 1.1.0",
+    "serialport": ">= 0.2.0",
     "q": ">= 0.9.2"
   },
   "author": "Jeff Rousseau <jroussea@cs.uml.edu>",
