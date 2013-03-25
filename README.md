@@ -74,4 +74,4 @@ Working examples (provided you change the serial port) can be found in the examp
 
 API Docs
 --------
-See the wiki.
+See the [API Reference](https://github.com/drzaiusx11/create-oi/wiki/API-Reference) on the wiki.
