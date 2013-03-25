@@ -40,12 +40,42 @@ var create = (function() {
 
     var distance = 0;
     var angle = 0;
+    var pkt = [];
+
+    function getHeader(buffer) {
+        for (var i = 0; i < buffer.length; i++) {
+            if (buffer[i] === 19 && buffer.length > i+1) {
+                return {start: i, length: buffer[i+1]};
+            }
+        }
+        return -1;
+    }
 
     function parse(buffer) {
-        var chksum = 0;
-        for (var i = 0; i < buffer.length; i++) {
-            chksum += buffer[i];
+        console.log(buffer.length);
+        var hdr = -1; 
+        if (pkt.length === 0) {
+            hdr = getHeader(buffer);
+        } else {
+            hdr = { start: 0, length: pkt[1] };
         }
+        if (hdr === -1)
+            return; // haven't found start of pkt yet
+
+        var chksum = 0;
+
+        for (var i = hdr.start; i < buffer.length; i++) {
+            pkt.push(buffer[i]);
+        }
+
+        if (pkt.length < (hdr.length + 1))
+            return;
+        
+        for (var i = 0; i < hdr.length + 1 /* +1 for chksum itself */; i++) {
+            chksum += pkt[i];
+        }
+
+        pkt.splice(0,hdr.length+1);
 
         chksum = chksum & 0xff;
 
