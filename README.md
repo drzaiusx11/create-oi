@@ -55,7 +55,7 @@ itself, so you can easily call `drive`, `rotate` or any other module method with
 callback. Several events such as `bump` or `wheeldrop` make contain information about 
 which specific sensor was triggered since there are multiple on the Create.
 
-```
+```javascript
 robot.on('ready', function() {
     // start by going forward
     this.drive(100, 0);
