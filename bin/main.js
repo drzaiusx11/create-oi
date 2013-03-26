@@ -8,6 +8,7 @@ var create = (function() {
     var prior = Q.resolve();
     var mode = "SAFE";
     var serial;
+    var watchdog = false;
 
     var cmds = {
         START:  0x80,
@@ -40,39 +41,55 @@ var create = (function() {
 
     var distance = 0;
     var angle = 0;
-    var pkt = [];
+    var pkt = []; // stores working packet data
 
-    function getHeader(buffer) {
+    function seek(buffer) {
         for (var i = 0; i < buffer.length; i++) {
-            if (buffer[i] === 19 && buffer.length > i+1 && buffer[i+1] > 0) {
-                return {start: i, length: buffer[i+1]};
-            }
+            if (buffer[i] === START_BYTE)
+                return i;
         }
         return -1;
     }
 
-    function parse(buffer) {
-        var hdr = -1; 
-        if (pkt.length === 0) 
-            hdr = getHeader(buffer);
-        else 
-            hdr = { start: 0, length: pkt[1] };
-        if (hdr === -1)
-            return; // haven't found start of pkt yet
+    var lmask = 0;
+    var LEN_IDX = 1;
+    var START_BYTE = 0x13;
 
-        for (var i = hdr.start; i < buffer.length; i++) 
+    function parse(buffer) {
+        // index to start reading packet 
+        // data, default to invalid value
+        var start = -1;  
+
+        if (pkt.length === 0) 
+            start = seek(buffer);
+        else 
+            start = 0; // we already have the header stored in pkt, read full buff
+
+        if (start === -1) // couldn't seek to START_BYTE
+            return;    
+
+        for (var i = start; i < buffer.length; i++) 
             pkt.push(buffer[i]);
 
-        // +3 due to START byte, COUNT byte, CHKSUM byte
-        if (pkt.length < (hdr.length + 3))
+        if (buffer.length < start + 2) // LEN_IDX can't be read yet
+            return; 
+
+        // START_BYTE found, but not actually start of pkt
+        if (buffer[start+1] === 0) { 
+            pkt = [];
+            return;
+        }
+
+        // +3 due to START byte, COUNT byte & CHKSUM bytes included with all pkts
+        if (pkt.length < (pkt[LEN_IDX] + 3))
             return;
         
-        var chksum = 0;
-        for (var i = 0; i < hdr.length + 3; i++) 
-            chksum += pkt[i];
+        // extract one whole packet from pkt buffer
+        var currPkt = pkt.splice(0,pkt[LEN_IDX]+3);
 
-        var currPkt = pkt.splice(0,hdr.length+3);
-        //console.log(currPkt);
+        var chksum = 0;
+        for (var i = 0; i < currPkt.length; i++) 
+            chksum += currPkt[i];
 
         chksum = chksum & 0xff;
 
@@ -92,12 +109,17 @@ var create = (function() {
                                 e.direction = "left";
                             if (mask === 3)
                                 e.direction = "forward";
-                            eventer.emit('bump', e);
+                            if (lmask === 0) {
+                                eventer.emit('bump', e);
+                            }
                         }
                         // wheeldrop occured!
                         if (mask > 0 && mask > 4) {
-                            eventer.emit('wheeldrop');
+                            if (lmask != mask) {
+                                eventer.emit('wheeldrop');
+                            }
                         }
+                        lmask = mask;
                         idx += 2;
                         sensorMsgsParsed++;
                     break;
@@ -120,14 +142,14 @@ var create = (function() {
                         sensorMsgsParsed++;
                     break;
                     default:
-                        //console.log("don't know what happend");
-                        idx++;
+                        console.log("WARN: couldn't parse incomming OI pkt");
+                        idx++; // prevents inf loop
                 }
             }
         } else {
-            //console.log("warn: incomming packet failed checksum");
-            pkt = [];
+            console.log("WARN: incomming packet failed checksum");
         }
+        pkt = []; // clear pkt buff contents
     }
 
     function sendCommand(cmd, payload) {
@@ -137,6 +159,42 @@ var create = (function() {
             serial.write(new Buffer([cmd].concat(payload)));
         }
         serial.flush();
+    }
+
+    function initCreate() {
+        sendCommand(cmds.START);
+        module.wait(100)
+        .then(function() {
+            sendCommand(cmds.SAFE);
+            return 100; // wait amount
+        })
+        .then(module.wait)
+        .then(function() {
+            // set song 0 to single beep
+            sendCommand(cmds.SONG, [0x0, 0x01, 72, 10]);
+            return 100;
+        })
+        .then(module.wait)
+        .then(function() {
+            // play song 0 
+            sendCommand(cmds.PLAY, [0x0]);
+            return 100;
+        })
+        .then(module.wait)
+        .then(function() {
+            sendCommand(cmds.STREAM, [3, 7, 19, 20]);
+            return 100;
+        })
+        .then(module.wait)
+        .then(function() {
+            // turn power LED on (and green)
+            sendCommand(cmds.LED, [8, 0, 255]);
+            return 100;
+        })
+        .then(module.wait)
+        .then(function() {
+            eventer.emit('ready');
+        });
     }
 
     // exported methods
@@ -149,16 +207,17 @@ var create = (function() {
     };
 
     module.init = function(settings) {
-        serial = new SerialPort(settings.serialport, { baudrate: 57600, bufferSize: 255 });
+        serial = new SerialPort(settings.serialport, { baudrate: 57600, bufferSize: 5 });
 
         // internal serial event handlers
 
         serial.on('data', function (data) {
+            watchdog = true;
             parse(data);
         });
 
         serial.on('close', function (err) {
-            console.log('port closed');
+            console.log('serial port closed');
         });
 
         serial.on('error', function (err) {
@@ -166,43 +225,17 @@ var create = (function() {
         });
 
         serial.on('open', function() {
-            console.log('connected');
-
-            sendCommand(cmds.START);
-            module.wait(100)
-            .then(function() {
-                sendCommand(cmds.SAFE);
-                return 100; // wait amount
-            })
-            .then(module.wait)
-            .then(function() {
-                // set song 0 to single beep
-                sendCommand(cmds.SONG, [0x0, 0x01, 72, 10]);
-                return 100;
-            })
-            .then(module.wait)
-            .then(function() {
-                // play song 0 
-                sendCommand(cmds.PLAY, [0x0]);
-                return 100;
-            })
-            .then(module.wait)
-            .then(function() {
-                sendCommand(cmds.STREAM, [3, 7, 19, 20]);
-                return 100;
-            })
-            .then(module.wait)
-            .then(function() {
-                // turn power LED on (and green)
-                sendCommand(cmds.LED, [8, 0, 255]);
-                return 100;
-            })
-            .then(module.wait)
-            .then(function() {
-                eventer.emit('ready');
-            });
+            console.log('serial port opened successfully');
+            initCreate();
+            setInterval(function() {
+                if (watchdog === false) {
+                    console.log('no data received from create... attempting to connect (again)');
+                    initCreate();
+                }
+                watchdog = false;
+            }, 2000);
         });
-    }; // init
+    }; 
 
     module.getDistance = function() {
         prior = prior.then(function() {
@@ -241,8 +274,6 @@ var create = (function() {
             var deferred = Q.defer();
             setTimeout(deferred.resolve, ms);
             return deferred.promise
-        }).then(function() {
-            return module;
         });
         return prior;
     };
@@ -259,7 +290,7 @@ var create = (function() {
     module.on = function(evt, cb) {
         eventer.on(evt, function(e) {
             // don't care what we have queued up, clear it!
-            prior = Q.resolve();
+            //prior = Q.resolve();
             // set context to module, call it
             cb.call(module, e); 
         });

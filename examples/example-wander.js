@@ -1,6 +1,6 @@
 var robot = require("create-oi");
 
-robot.init({ serialport: "/dev/ttyUSB0" });
+robot.init({ serialport: "/dev/tty.usbserial-A2001nf6" });
 
 robot.on('ready', function() {
     // start by going forward
@@ -17,15 +17,17 @@ robot.on('bump', function(e) {
         case 'forward': // randomly choose a direction
             var dir = [-1,1][Math.round(Math.random())];
             this.rotate(dir*100);
+            this.wait(2100);
             break;
         case 'left':
             this.rotate(-100); // turn right
+            this.wait(1000);
             break;
         case 'right':
             this.rotate(100); // turn left 
+            this.wait(1000);
             break;
     }
-    this.wait(1000);
 
     // onward!
     this.drive(100, 0);
