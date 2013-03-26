@@ -51,9 +51,17 @@ var create = (function() {
         return -1;
     }
 
-    var lmask = 0;
+    var ldata = 0;
     var LEN_IDX = 1;
     var START_BYTE = 0x13;
+
+    function bumperIdxToName(idx) {
+        switch(idx) {
+            case 1: return "right";
+            case 2: return "left";
+            case 3: return "forward";
+        }
+    }
 
     function parse(buffer) {
         // index to start reading packet 
@@ -99,27 +107,22 @@ var create = (function() {
             while (idx < currPkt.length - 1) {
                 switch (currPkt[idx]) {
                     case sensors.BUMP_WDROP:
-                        var mask = currPkt[idx+1];
+                        var data = currPkt[idx+1];
                         // bumper hit!
-                        if (mask > 0 && mask < 4) {
-                            var e = {};
-                            if (mask === 1)
-                                e.direction = "right";
-                            if (mask === 2)
-                                e.direction = "left";
-                            if (mask === 3)
-                                e.direction = "forward";
-                            if (lmask === 0) {
-                                eventer.emit('bump', e);
+                        if (data > 0 && data < 4) {
+                            if (ldata === 0) {
+                                eventer.emit('bump', { which: bumperIdxToName(data) });
                             }
                         }
+                        if (ldata != 0 && data === 0) 
+                            eventer.emit('bumpend', { which: bumperIdxToName(ldata) });
                         // wheeldrop occured!
-                        if (mask > 0 && mask > 4) {
-                            if (lmask != mask) {
+                        if (data > 0 && data > 4) {
+                            if (ldata != data) {
                                 eventer.emit('wheeldrop');
                             }
                         }
-                        lmask = mask;
+                        ldata = data;
                         idx += 2;
                         sensorMsgsParsed++;
                     break;
@@ -147,7 +150,7 @@ var create = (function() {
                 }
             }
         } else {
-            console.log("WARN: incomming packet failed checksum");
+            ;//console.log("WARN: incomming packet failed checksum");
         }
         pkt = []; // clear pkt buff contents
     }
@@ -287,13 +290,17 @@ var create = (function() {
         return mode;
     };
 
+    listeners = { 'bump': [], 'bumpend': [] };
+
     module.on = function(evt, cb) {
-        eventer.on(evt, function(e) {
-            // don't care what we have queued up, clear it!
-            //prior = Q.resolve();
+        eventer.on(evt, function(e) { 
             // set context to module, call it
-            cb.call(module, e); 
+            cb.call(module, e);
         });
+    };
+
+    module.off = function(evt) {
+        eventer.removeAllListeners(evt);
     };
 
     // expose functions to the REPL's context

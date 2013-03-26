@@ -1,34 +1,48 @@
+var SPEED = 100; // 100mm/s
 var robot = require("create-oi");
 
 robot.init({ serialport: "/dev/tty.usbserial-A2001nf6" });
 
 robot.on('ready', function() {
     // start by going forward
-    this.drive(100, 0);
+    this.drive(SPEED, 0);
 });
 
-robot.on('bump', function(e) {
+var bumpHndlr = function(bumperEvt) {
+    var r = this;
+    
+    // temporarily disable further bump events
+    // getting multiple bump events while one is in progress
+    // will cause weird interleaving of our robot behavior 
+    r.off('bump');
+
     // backup a bit
-    this.drive(-100, 0);
-    this.wait(1000);
+    r.drive(-SPEED, 0);
+    r.wait(1000);
 
     // turn based on which bumper sensor got hit
-    switch(e.direction) {
+    switch(bumperEvt.which) {
         case 'forward': // randomly choose a direction
             var dir = [-1,1][Math.round(Math.random())];
-            this.rotate(dir*100);
-            this.wait(2100);
+            r.rotate(dir*SPEED);
+            r.wait(2100); // time is in ms
             break;
         case 'left':
-            this.rotate(-100); // turn right
-            this.wait(1000);
+            r.rotate(-SPEED); // turn right
+            r.wait(1000);
             break;
         case 'right':
-            this.rotate(100); // turn left 
-            this.wait(1000);
+            r.rotate(SPEED); // turn left 
+            r.wait(1000);
             break;
     }
 
     // onward!
-    this.drive(100, 0);
-});
+    r.drive(SPEED, 0)
+    .then(function() {
+        // turn handler back on
+        r.on('bump', bumpHndlr);
+    });
+};
+
+robot.on('bump', bumpHndlr);
