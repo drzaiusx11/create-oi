@@ -18,7 +18,7 @@ Installation
 ------------
 To install the version with the DRIVE_DIRECT capability:
 ```sh
-npm install --save git://github.com/EdoB/create-oi.git
+npm install --save git://github.com/drzaiusx11/create-oi.git
 ```
 
 Official release:
