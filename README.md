@@ -16,8 +16,14 @@ Prerequisites
 
 Installation
 ------------
+To install the version with the DRIVE_DIRECT capability:
 ```sh
-npm install create-oi
+npm install --save git://github.com/EdoB/create-oi.git
+```
+
+Official release:
+```sh
+npm install --save create-oi
 ```
 
 Getting Started

@@ -14,10 +14,12 @@ var create = (function() {
         START:  0x80,
         SAFE:   0x83,
         DRIVE:  0x89,
+        DRIVE_DIRECT:  0x91,
         LED:    0x8B,
         SONG:   0x8C,
         PLAY:   0x8D,
-        STREAM: 0x94
+        STREAM: 0x94,
+        SENSORS: 0x8E
     };
 
     var sensors = { 
@@ -267,6 +269,17 @@ var create = (function() {
         });
         return prior;
     };
+
+
+    module.driveDirect = function(rightWeel,leftWeel) {
+        prior = prior.then(function() {
+            sendCommand(cmds.SAFE);
+            sendCommand(cmds.DRIVE_DIRECT, [uB(rightWeel), lB(rightWeel), uB(leftWeel), lB(leftWeel)]);
+            return Q.resolve();
+        });
+        return prior;
+    };
+
 
     module.rotate = function(vel) {
         return module.drive(vel, 1);
