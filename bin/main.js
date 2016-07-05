@@ -9,6 +9,8 @@ var create = (function() {
     var mode = "SAFE";
     var serial;
     var watchdog = false;
+    var create1Baudrate = 57600;
+    var create2Baudrate = 115200;
 
     var cmds = {
         START:  0x80,
@@ -22,7 +24,7 @@ var create = (function() {
         SENSORS: 0x8E
     };
 
-    var sensors = { 
+    var sensors = {
         BUMP_WDROP: 7,
         WALL:       8,
         BUTTONS:    18,
@@ -66,26 +68,26 @@ var create = (function() {
     }
 
     function parse(buffer) {
-        // index to start reading packet 
+        // index to start reading packet
         // data, default to invalid value
-        var start = -1;  
+        var start = -1;
 
-        if (pkt.length === 0) 
+        if (pkt.length === 0)
             start = seek(buffer);
-        else 
+        else
             start = 0; // we already have the header stored in pkt, read full buff
 
         if (start === -1) // couldn't seek to START_BYTE
-            return;    
+            return;
 
-        for (var i = start; i < buffer.length; i++) 
+        for (var i = start; i < buffer.length; i++)
             pkt.push(buffer[i]);
 
         if (buffer.length < start + 2) // LEN_IDX can't be read yet
-            return; 
+            return;
 
         // START_BYTE found, but not actually start of pkt
-        if (buffer[start+1] === 0) { 
+        if (buffer[start+1] === 0) {
             pkt = [];
             return;
         }
@@ -93,12 +95,12 @@ var create = (function() {
         // +3 due to START byte, COUNT byte & CHKSUM bytes included with all pkts
         if (pkt.length < (pkt[LEN_IDX] + 3))
             return;
-        
+
         // extract one whole packet from pkt buffer
         var currPkt = pkt.splice(0,pkt[LEN_IDX]+3);
 
         var chksum = 0;
-        for (var i = 0; i < currPkt.length; i++) 
+        for (var i = 0; i < currPkt.length; i++)
             chksum += currPkt[i];
 
         chksum = chksum & 0xff;
@@ -116,7 +118,7 @@ var create = (function() {
                                 eventer.emit('bump', { which: bumperIdxToName(data) });
                             }
                         }
-                        if (ldata != 0 && data === 0) 
+                        if (ldata != 0 && data === 0)
                             eventer.emit('bumpend', { which: bumperIdxToName(ldata) });
                         // wheeldrop occured!
                         if (data > 0 && data > 4) {
@@ -181,7 +183,7 @@ var create = (function() {
         })
         .then(module.wait)
         .then(function() {
-            // play song 0 
+            // play song 0
             sendCommand(cmds.PLAY, [0x0]);
             return 100;
         })
@@ -212,7 +214,10 @@ var create = (function() {
     };
 
     module.init = function(settings) {
-        serial = new SerialPort(settings.serialport, { baudrate: 57600, bufferSize: 5 });
+        serial = new SerialPort(settings.serialport, {
+          baudrate: settings.version === 2 ? create2Baudrate : create1Baudrate, 
+          bufferSize: 5
+        });
 
         // internal serial event handlers
 
@@ -240,7 +245,7 @@ var create = (function() {
                 watchdog = false;
             }, 2000);
         });
-    }; 
+    };
 
     module.getDistance = function() {
         prior = prior.then(function() {
@@ -298,7 +303,7 @@ var create = (function() {
         mode = m;
         sendCommand(mode);
     };
-    
+
     module.getMode = function() {
         return mode;
     };
@@ -306,7 +311,7 @@ var create = (function() {
     listeners = { 'bump': [], 'bumpend': [] };
 
     module.on = function(evt, cb) {
-        eventer.on(evt, function(e) { 
+        eventer.on(evt, function(e) {
             // set context to module, call it
             cb.call(module, e);
         });
