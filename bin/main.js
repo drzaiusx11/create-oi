@@ -11,6 +11,8 @@ var create = (function() {
     var watchdog = false;
     var create1Baudrate = 57600;
     var create2Baudrate = 115200;
+    var initStepIntervalMs = 100;
+    var watchdogIntervalMs = 2000;
 
     var cmds = {
         START:  0x80,
@@ -170,33 +172,33 @@ var create = (function() {
 
     function initCreate() {
         sendCommand(cmds.START);
-        module.wait(100)
+        module.wait(initStepIntervalMs)
         .then(function() {
             sendCommand(cmds.SAFE);
-            return 100; // wait amount
+            return initStepIntervalMs; // wait amount
         })
         .then(module.wait)
         .then(function() {
             // set song 0 to single beep
             sendCommand(cmds.SONG, [0x0, 0x01, 72, 10]);
-            return 100;
+            return initStepIntervalMs;
         })
         .then(module.wait)
         .then(function() {
             // play song 0
             sendCommand(cmds.PLAY, [0x0]);
-            return 100;
+            return initStepIntervalMs;
         })
         .then(module.wait)
         .then(function() {
             sendCommand(cmds.STREAM, [3, 7, 19, 20]);
-            return 100;
+            return initStepIntervalMs;
         })
         .then(module.wait)
         .then(function() {
             // turn power LED on (and green)
             sendCommand(cmds.LED, [8, 0, 255]);
-            return 100;
+            return initStepIntervalMs;
         })
         .then(module.wait)
         .then(function() {
@@ -218,6 +220,14 @@ var create = (function() {
           baudrate: settings.version === 2 ? create2Baudrate : create1Baudrate, 
           bufferSize: 5
         });
+
+        if(settings.initStepIntervalMs) {
+            initStepIntervalMs = settings.initStepIntervalMs;
+        }
+
+        if(settings.watchdogIntervalMs) {
+            watchdogIntervalMs = settings.watchdogIntervalMs;
+        }
 
         // internal serial event handlers
 
@@ -243,7 +253,7 @@ var create = (function() {
                     initCreate();
                 }
                 watchdog = false;
-            }, 2000);
+            }, watchdogIntervalMs);
         });
     };
 
