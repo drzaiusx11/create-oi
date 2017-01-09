@@ -42,7 +42,7 @@ In your code you'll probably want to start with these two lines:
 ```javascript
 var robot = require("create-oi");
 
-robot.init({ serialport: "/dev/tty.usbserial-A2001nf6" });
+robot.init({ serialport: "/dev/tty.usbserial-A2001nf6", version: 1 }); // use version: 2 if using a Create2
 ```
 Make sure to set your `serialport` to the device name you found earlier. 
 On my mac for me this is `"/dev/tty.usbserial-A2001nf6"`. Yours _will_ be different.
