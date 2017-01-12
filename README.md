@@ -9,7 +9,7 @@ What this library attempts to do is implement a simple and intuitive API on top 
 
 Prerequisites
 -------------
- * iRobot Create
+ * iRobot Create (version 1 or 2)
  * Installed usb-serial drivers and connected laptop, Raspberry Pi, Gumstix or similarly node-capable machine to your Create
    * see: [Windows installation instructions](http://homesupport.irobot.com/app/answers/detail/a_id/362/~/installing-the-usb-serial-port) if using a windows laptop (linux comes with drivers, macs will need [FTDI drivers](http://www.ftdichip.com/Drivers/D2XX.htm))
  * node and npm are installed (on above machine)
