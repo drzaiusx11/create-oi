@@ -1,6 +1,6 @@
 var create = (function() {
     var module = {};
-    var SerialPort = require("serialport").SerialPort;
+    var SerialPort = require("serialport");
     var emitter = require('events').EventEmitter;
     var eventer = new emitter();
     var Q = require("q");
