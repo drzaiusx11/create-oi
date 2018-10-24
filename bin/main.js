@@ -34,18 +34,25 @@ var create = (function() {
     };
 
     // helpers
+    let uInt16 = n => {
+          return n & 0xffff;
+    }
 
-    var uB = function(word) {
-        return word >> 8;
+    let twosComp = word => {
+        return uInt16(~word + 1);
     };
 
-    var lB = function(word) {
-        return word & 0x000000ff;
+    let uB = function(n) {
+        return n >> 8;
     };
 
-    var distance = 0;
-    var angle = 0;
-    var pkt = []; // stores working packet data
+    let lB = function(n) {
+        return n & 0xff;
+    };
+
+    let distance = 0;
+    let angle = 0;
+    let pkt = []; // stores working packet data
 
     function seek(buffer) {
         for (var i = 0; i < buffer.length; i++) {
@@ -159,43 +166,45 @@ var create = (function() {
         pkt = []; // clear pkt buff contents
     }
 
-    function sendCommand(cmd, payload) {
+    module.sendCommand = function(cmd, payload) {
+        console.log("Sending",cmd,payload);
         if (typeof payload === "undefined") {
             serial.write(new Buffer([cmd]));
         } else {
             serial.write(new Buffer([cmd].concat(payload)));
         }
-        serial.flush();
+        // waits for transmitting fully to serial port
+        serial.drain();
     }
 
     function initCreate() {
-        sendCommand(cmds.START);
+        module.sendCommand(cmds.START);
         module.wait(100)
         .then(function() {
-            sendCommand(cmds.SAFE);
+            module.sendCommand(cmds.SAFE);
             return 100; // wait amount
         })
         .then(module.wait)
         .then(function() {
             // set song 0 to single beep
-            sendCommand(cmds.SONG, [0x0, 0x01, 72, 10]);
+            module.sendCommand(cmds.SONG, [0x0, 0x01, 72, 10]);
             return 100;
         })
         .then(module.wait)
         .then(function() {
             // play song 0
-            sendCommand(cmds.PLAY, [0x0]);
+            module.sendCommand(cmds.PLAY, [0x0]);
             return 100;
         })
         .then(module.wait)
         .then(function() {
-            sendCommand(cmds.STREAM, [3, 7, 19, 20]);
+            module.sendCommand(cmds.STREAM, [3, 7, 19, 20]);
             return 100;
         })
         .then(module.wait)
         .then(function() {
             // turn power LED on (and green)
-            sendCommand(cmds.LED, [8, 0, 255]);
+            module.sendCommand(cmds.LED, [8, 0, 255]);
             return 100;
         })
         .then(module.wait)
@@ -220,7 +229,6 @@ var create = (function() {
         });
 
         // internal serial event handlers
-
         serial.on('data', function (data) {
             watchdog = true;
             parse(data);
@@ -265,11 +273,11 @@ var create = (function() {
 
     module.drive = function(fwd,rad) {
         prior = prior.then(function() {
-            sendCommand(cmds.SAFE);
+            module.sendCommand(cmds.SAFE);
             if (Math.abs(rad) < 0.0001) {
                rad = DRV_FWD_RAD;
             }
-            sendCommand(cmds.DRIVE, [uB(fwd), lB(fwd), uB(rad), lB(rad)]);
+            module.sendCommand(cmds.DRIVE, [uB(twosComp(fwd)), lB(twosComp(fwd)), uB(twosComp(rad)), lB(twosComp(rad))]);
             return Q.resolve();
         });
         return prior;
@@ -278,8 +286,8 @@ var create = (function() {
 
     module.driveDirect = function(rightWeel,leftWeel) {
         prior = prior.then(function() {
-            sendCommand(cmds.SAFE);
-            sendCommand(cmds.DRIVE_DIRECT, [uB(rightWeel), lB(rightWeel), uB(leftWeel), lB(leftWeel)]);
+            module.sendCommand(cmds.SAFE);
+            module.sendCommand(cmds.DRIVE_DIRECT, [uB(rightWeel), lB(rightWeel), uB(leftWeel), lB(leftWeel)]);
             return Q.resolve();
         });
         return prior;
@@ -301,7 +309,7 @@ var create = (function() {
 
     module.setMode = function(m) {
         mode = m;
-        sendCommand(mode);
+        module.sendCommand(mode);
     };
 
     module.getMode = function() {
@@ -326,6 +334,10 @@ var create = (function() {
     /*
     var repl = require("repl");
     var local = repl.start({ prompt: "robot> ", ignoreUndefined: true});
+    local.context.twosComp = twosComp;
+    local.context.uB = uB;
+    local.context.lB = lB;
+    local.context.init = module.init;
     local.context.drive = module.drive;
     local.context.wait = module.wait;
     local.context.setMode = module.setMode;
@@ -335,6 +347,7 @@ var create = (function() {
     local.context.on = module.on;
     local.context.init = module.init;
     local.context.rotate = module.rotate;
+    local.context.sendCommand = module.sendCommand;
     */
 
     return module;
