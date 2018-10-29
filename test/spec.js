@@ -11,15 +11,6 @@ const _mockSerial = (store) => {
     sinon.stub(create._serial, 'drain').callsFake(buff => {}); // no-op
 };
 
-let sandbox;
-beforeEach(function () {
-    sandbox = sinon.createSandbox();
-});
-
-afterEach(function () {
-    sandbox.restore();
-});
-
 describe('sendCommand fault conditions', () => {
     it('dies if called before init', done => {
         assert.throws(() => {
