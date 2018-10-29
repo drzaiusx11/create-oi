@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "buster test"
+    "test": "npx mocha test/spec.js"
   },
   "repository": "",
   "keywords": [
@@ -21,5 +21,10 @@
   },
   "author": "Jeff Rousseau <jroussea@cs.uml.edu>",
   "license": "GPL",
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "assert": "^1.4.1",
+    "mocha": "^5.2.0",
+    "sinon": "^7.0.0"
+  }
 }

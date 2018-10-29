@@ -24,6 +24,8 @@ var create = (function() {
         SENSORS: 0x8E
     };
 
+    module.cmd = cmds;
+
     var sensors = {
         BUMP_WDROP: 7,
         WALL:       8,
@@ -32,6 +34,8 @@ var create = (function() {
         ANGLE:      20,
         VOLTAGE:    22
     };
+
+    module.sensor = sensors;
 
     // helpers
     let uInt16 = n => {
@@ -169,12 +173,12 @@ var create = (function() {
     module.sendCommand = function(cmd, payload) {
         console.log("Sending",cmd,payload);
         if (typeof payload === "undefined") {
-            serial.write(new Buffer([cmd]));
+            module._serial.write(new Buffer([cmd]));
         } else {
-            serial.write(new Buffer([cmd].concat(payload)));
+            module._serial.write(new Buffer([cmd].concat(payload)));
         }
         // waits for transmitting fully to serial port
-        serial.drain();
+        module._serial.drain();
     }
 
     function initCreate() {
@@ -222,27 +226,34 @@ var create = (function() {
         FULL:    "FULL"
     };
 
+    // have skeleton in place before init() is called
+    // useful for unit tests that don't need a real serial port
+    module._serial = {
+        write: (b) => {},
+        drain: () => {},
+    };
+
     module.init = function(settings) {
-        serial = new SerialPort(settings.serialport, {
+        module._serial = new SerialPort(settings.serialport, {
           baudRate: settings.version === 2 ? create2Baudrate : create1Baudrate, 
           bufferSize: 5
         });
 
         // internal serial event handlers
-        serial.on('data', function (data) {
+        module._serial.on('data', function (data) {
             watchdog = true;
             parse(data);
         });
 
-        serial.on('close', function (err) {
+        module._serial.on('close', function (err) {
             console.log('serial port closed');
         });
 
-        serial.on('error', function (err) {
+        module._serial.on('error', function (err) {
             console.error("error", err);
         });
 
-        serial.on('open', function() {
+        module._serial.on('open', function() {
             console.log('serial port opened successfully');
             initCreate();
             setInterval(function() {
