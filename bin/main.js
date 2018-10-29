@@ -171,7 +171,6 @@ var create = (function() {
     }
 
     module.sendCommand = function(cmd, payload) {
-        console.log("Sending",cmd,payload);
         if (typeof payload === "undefined") {
             module._serial.write(new Buffer([cmd]));
         } else {
@@ -226,11 +225,17 @@ var create = (function() {
         FULL:    "FULL"
     };
 
+    const initNotCalledMsg = "illegal attempt to communicate with robot before init() was called, aborting";
+
     // have skeleton in place before init() is called
     // useful for unit tests that don't need a real serial port
     module._serial = {
-        write: (b) => {},
-        drain: () => {},
+        write: (b) => {
+            throw new Error(initNotCalledMsg);
+        },
+        drain: () => {
+            throw new Error(initNotCalledMsg);
+        },
     };
 
     module.init = function(settings) {
