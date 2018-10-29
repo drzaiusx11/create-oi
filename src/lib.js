@@ -345,26 +345,16 @@ var create = (function() {
         eventer.removeAllListeners(evt);
     };
 
-    // expose functions to the REPL's context
-    // uncomment for REPL use
-    /*
-    var repl = require("repl");
-    var local = repl.start({ prompt: "robot> ", ignoreUndefined: true});
-    local.context.twosComp = twosComp;
-    local.context.uB = uB;
-    local.context.lB = lB;
-    local.context.init = module.init;
-    local.context.drive = module.drive;
-    local.context.wait = module.wait;
-    local.context.setMode = module.setMode;
-    local.context.getMode = module.getMode;
-    local.context.getDistance = module.getDistance;
-    local.context.getAngle = module.getAngle;
-    local.context.on = module.on;
-    local.context.init = module.init;
-    local.context.rotate = module.rotate;
-    local.context.sendCommand = module.sendCommand;
-    */
+    // expose module to the REPL's context
+    module.repl = () => {
+        var repl = require("repl");
+        var local = repl.start({ prompt: "create-oi> ", ignoreUndefined: true});
+        for(let prop in module) {
+            if (module.hasOwnProperty(prop)) {
+                local.context[prop] = module[prop];
+            }
+        }
+    };
 
     return module;
 }());

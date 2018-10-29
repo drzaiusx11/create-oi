@@ -1,7 +1,7 @@
 const assert = require('assert');
 const mocha = require('mocha');
 const sinon = require('sinon');
-const create = require('../bin/main.js');
+const create = require('../src/lib.js');
 
 // mock out the serial port
 const _mockSerial = (store) => {

@@ -1,8 +1,8 @@
 {
   "name": "create-oi",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "iRobot Create Open Interface (OI) library",
-  "main": "bin/main.js",
+  "main": "bin/lib.js",
   "directories": {
     "test": "test"
   },
@@ -16,8 +16,9 @@
     "irobot"
   ],
   "dependencies": {
-    "serialport": ">= 0.2.0",
-    "q": ">= 0.8.0"
+    "q": ">= 0.8.0",
+    "repl": "^0.1.3",
+    "serialport": ">= 0.2.0"
   },
   "author": "Jeff Rousseau <jroussea@cs.uml.edu>",
   "license": "GPL",
