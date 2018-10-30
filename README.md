@@ -4,14 +4,14 @@ create-oi: iRobot Create&#174; driver for node
 An API for interacting with an iRobot Create. Because robots are fun.
 
 ---
-The iRobot Create provides a low-level serial protocol called the "Open Interface" (OI) documented [here](http://www.irobot.com/filelibrary/pdfs/hrd/create/Create%20Open%20Interface_v2.pdf).
+The iRobot Create provides a low-level serial protocol called the "Open Interface" (OI) documented [here](https://cdn-shop.adafruit.com/datasheets/create_2_Open_Interface_Spec.pdf).
 What this library attempts to do is implement a simple and intuitive API on top of OI in [node.js](http://nodejs.org/) using the great [serialport](https://github.com/voodootikigod/node-serialport) library.
 
 Prerequisites
 -------------
  * iRobot Create (version 1 or 2)
  * Installed usb-serial drivers and connected laptop, Raspberry Pi, Gumstix or similarly node-capable machine to your Create
-   * see: [Windows installation instructions](http://homesupport.irobot.com/app/answers/detail/a_id/362/~/installing-the-usb-serial-port) if using a windows laptop (linux comes with drivers, macs will need [FTDI drivers](http://www.ftdichip.com/Drivers/D2XX.htm))
+   * see: [Windows installation instructions](https://www.ftdichip.com/Support/Documents/InstallGuides/AN_396%20FTDI%20Drivers%20Installation%20Guide%20for%20Windows%2010.pdf) if using a windows laptop (linux comes with drivers, macs will need [FTDI drivers](http://www.ftdichip.com/Drivers/D2XX.htm))
  * node and npm are installed (on above machine)
 
 Installation
