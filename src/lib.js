@@ -3,25 +3,22 @@ var create = (function() {
     var SerialPort = require("serialport");
     var emitter = require('events').EventEmitter;
     var eventer = new emitter();
-    var Q = require("q");
     var DRV_FWD_RAD = 0x7fff;
-    var prior = Q.resolve();
-    var mode = "SAFE";
     var serial;
     var watchdog = false;
     var create1Baudrate = 57600;
     var create2Baudrate = 115200;
 
     var cmds = {
-        START:  0x80,
-        SAFE:   0x83,
-        DRIVE:  0x89,
-        DRIVE_DIRECT:  0x91,
-        LED:    0x8B,
-        SONG:   0x8C,
-        PLAY:   0x8D,
-        STREAM: 0x94,
-        SENSORS: 0x8E
+        START:          0x80,
+        SAFE:           0x83,
+        DRIVE:          0x89,
+        DRIVE_DIRECT:   0x91,
+        LED:            0x8B,
+        SONG:           0x8C,
+        PLAY:           0x8D,
+        STREAM:         0x94,
+        SENSORS:        0x8E
     };
 
     module.cmd = cmds;
@@ -171,70 +168,34 @@ var create = (function() {
     }
 
     module.sendCommand = function(cmd, payload) {
+        // note: write() is non-blocking but drain() is blocking
         if (typeof payload === "undefined") {
             module._serial.write(new Buffer([cmd]));
         } else {
             module._serial.write(new Buffer([cmd].concat(payload)));
         }
-        // waits for transmitting fully to serial port
         module._serial.drain();
     }
 
     function initCreate() {
         module.sendCommand(cmds.START);
-        module.wait(100)
-        .then(function() {
-            module.sendCommand(cmds.SAFE);
-            return 100; // wait amount
-        })
-        .then(module.wait)
-        .then(function() {
-            // set song 0 to single beep
-            module.sendCommand(cmds.SONG, [0x0, 0x01, 72, 10]);
-            return 100;
-        })
-        .then(module.wait)
-        .then(function() {
-            // play song 0
-            module.sendCommand(cmds.PLAY, [0x0]);
-            return 100;
-        })
-        .then(module.wait)
-        .then(function() {
-            module.sendCommand(cmds.STREAM, [3, 7, 19, 20]);
-            return 100;
-        })
-        .then(module.wait)
-        .then(function() {
-            // turn power LED on (and green)
-            module.sendCommand(cmds.LED, [8, 0, 255]);
-            return 100;
-        })
-        .then(module.wait)
-        .then(function() {
-            eventer.emit('ready');
-        });
+        module.sendCommand(cmds.SAFE);
+        module.sendCommand(cmds.SONG, [0, 1, 72, 10]);
+        module.sendCommand(cmds.PLAY, [0]);
+        module.sendCommand(cmds.STREAM, [3, 7, 19, 20]);
+        module.sendCommand(cmds.LED, [8, 0, 255]);
+        eventer.emit('ready');
     }
 
-    // exported methods
-
-    module.modes = {
-        OFF:     "OFF",
-        PASSIVE: "PASSIVE",
-        SAFE:    "SAFE",
-        FULL:    "FULL"
-    };
-
-    const initNotCalledMsg = "illegal attempt to communicate with robot before init() was called, aborting";
+    const uninitializedErrMsg = "illegal attempt to communicate with robot before init() was called, aborting";
 
     // have skeleton in place before init() is called
-    // useful for unit tests that don't need a real serial port
     module._serial = {
         write: (b) => {
-            throw new Error(initNotCalledMsg);
+            throw new Error(uninitializedErrMsg);
         },
         drain: () => {
-            throw new Error(initNotCalledMsg);
+            throw new Error(uninitializedErrMsg);
         },
     };
 
@@ -272,67 +233,35 @@ var create = (function() {
     };
 
     module.getDistance = function() {
-        prior = prior.then(function() {
-            console.log(distance);
-            return distance;
-        });
-        return prior;
+        return distance;
     };
 
     module.getAngle = function() {
-        prior = prior.then(function() {
-            console.log(angle);
-            return angle;
-        });
-        return prior;
+        return angle;
     };
 
     module.drive = function(fwd,rad) {
-        prior = prior.then(function() {
-            module.sendCommand(cmds.SAFE);
-            if (Math.abs(rad) < 0.0001) {
-               rad = DRV_FWD_RAD;
-            }
-            module.sendCommand(cmds.DRIVE, [uB(twosComp(fwd)), lB(twosComp(fwd)), uB(twosComp(rad)), lB(twosComp(rad))]);
-            return Q.resolve();
-        });
-        return prior;
+        module.sendCommand(cmds.SAFE);
+        if (Math.abs(rad) < 0.0001) {
+           rad = DRV_FWD_RAD;
+        }
+        module.sendCommand(cmds.DRIVE, [uB(twosComp(fwd)), lB(twosComp(fwd)), uB(twosComp(rad)), lB(twosComp(rad))]);
     };
-
 
     module.driveDirect = function(rightWeel,leftWeel) {
-        prior = prior.then(function() {
-            module.sendCommand(cmds.SAFE);
-            module.sendCommand(cmds.DRIVE_DIRECT, [uB(rightWeel), lB(rightWeel), uB(leftWeel), lB(leftWeel)]);
-            return Q.resolve();
-        });
-        return prior;
+        module.sendCommand(cmds.SAFE);
+        module.sendCommand(cmds.DRIVE_DIRECT, [uB(rightWeel), lB(rightWeel), uB(leftWeel), lB(leftWeel)]);
     };
-
 
     module.rotate = function(vel) {
         return module.drive(vel, 1);
     };
 
     module.wait = function(ms) {
-        prior = prior.then(function() {
-            var deferred = Q.defer();
-            setTimeout(deferred.resolve, ms);
-            return deferred.promise
+        return new Promise((resolve,reject) => {
+            setTimeout(resolve, ms);
         });
-        return prior;
     };
-
-    module.setMode = function(m) {
-        mode = m;
-        module.sendCommand(mode);
-    };
-
-    module.getMode = function() {
-        return mode;
-    };
-
-    listeners = { 'bump': [], 'bumpend': [] };
 
     module.on = function(evt, cb) {
         eventer.on(evt, function(e) {

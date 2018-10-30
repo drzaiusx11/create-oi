@@ -7,8 +7,8 @@ const create = require('../src/lib.js');
 const _mockSerial = (store) => {
     sinon.stub(create._serial, 'write').callsFake(buff => {
         store.buffer = buff;
-    });
-    sinon.stub(create._serial, 'drain').callsFake(buff => {}); // no-op
+    })
+    sinon.stub(create._serial, 'drain').callsFake(() => {}); //no-op
 };
 
 describe('sendCommand fault conditions', () => {

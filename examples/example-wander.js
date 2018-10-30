@@ -39,10 +39,7 @@ var bumpHndlr = function(bumperEvt) {
 
     // onward!
     r.drive(SPEED, 0)
-    .then(function() {
-        // turn handler back on
-        r.on('bump', bumpHndlr);
-    });
+    r.on('bump', bumpHndlr);
 };
 
 robot.on('bump', bumpHndlr);
